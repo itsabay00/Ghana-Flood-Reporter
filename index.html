@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accra FloodWatch — Real-time Flood Zone Reporting & Safe Zones</title>
+  
+  <!-- Typography: Outfit Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  
+  <!-- Custom Styling -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- App Shell -->
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-badge">
+          <!-- Wave / Flood Icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 22h20L12 2z"/>
+            <path d="M12 9v4"/>
+            <path d="M12 17h.01"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="eyebrow">Crisis Portal</span>
+          <h1>Accra FloodWatch</h1>
+        </div>
+      </div>
+      
+      <!-- Global Status Bar Indicator -->
+      <div class="header-status-card">
+        <div class="status-info">
+          <span class="status-label">Accra Flood Risk Score</span>
+          <span class="status-value" id="risk-score-val">74</span>
+        </div>
+        <!-- Signature status / health bar: Red (Danger) -> Yellow (Warning) -> Green (Safe) -> Blue (Info) -->
+        <!-- In a flood context, high score = high danger (red side), low score = low danger (green/blue side).
+             The bar segment is customized visually. -->
+        <div class="health-bar-container">
+          <div class="health-bar-segments">
+            <div class="segment segment-blue"></div>
+            <div class="segment segment-green"></div>
+            <div class="segment segment-yellow"></div>
+            <div class="segment segment-orange"></div>
+            <div class="segment segment-red"></div>
+          </div>
+          <!-- Indicator dot aligned to the score (e.g. 74% from left) -->
+          <div class="health-bar-indicator" id="health-bar-indicator" style="left: 74%;"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Grid Dashboard -->
+    <main class="dashboard-grid">
+      
+      <!-- LEFT COLUMN: Inputs and Feeds -->
+      <aside class="control-panel">
+        
+        <!-- Key Metrics Cards Group -->
+        <section class="metrics-row">
+          <div class="metric-card">
+            <span class="metric-label">Active Zones</span>
+            <div class="metric-value" id="count-active-zones">5</div>
+          </div>
+          
+          <div class="metric-card">
+            <span class="metric-label">Safe Havens</span>
+            <div class="metric-value" id="count-safe-zones">3</div>
+          </div>
+          
+          <div class="metric-card">
+            <span class="metric-label">Today's Rain</span>
+            <div class="metric-value">142<span class="unit">mm</span></div>
+          </div>
+        </section>
+        
+        <!-- Report Flood Zone Card -->
+        <section class="card form-card">
+          <h2>Report Flood Zone</h2>
+          <p class="section-desc">Help your community. Click on the map to pin the exact location, or search to report.</p>
+          
+          <form id="report-flood-form">
+            <!-- Selected Coordinates (Filled via Map Click) -->
+            <div class="form-group">
+              <label for="location-coords">Selected Location</label>
+              <div class="input-wrapper">
+                <input type="text" id="location-coords" placeholder="Click on the map to target location" readonly required>
+                <button type="button" class="btn-icon" id="btn-current-location" title="Use current location">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+                    <path d="M12 2v2M12 20v2M4 12H2M22 12h-2"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Area / Street Name -->
+            <div class="form-group">
+              <label for="location-name">Area Name / Landmark</label>
+              <input type="text" id="location-name" placeholder="e.g. Kaneshie Market, Adabraka Sahara" required>
+            </div>
+            
+            <!-- Severity Select (Styled Custom Buttons) -->
+            <div class="form-group">
+              <label>Flood Severity</label>
+              <div class="severity-selector">
+                <input type="radio" name="severity" id="sev-low" value="low" required>
+                <label for="sev-low" class="sev-label sev-low">
+                  <span class="dot"></span> Low
+                </label>
+                
+                <input type="radio" name="severity" id="sev-medium" value="medium" checked>
+                <label for="sev-medium" class="sev-label sev-medium">
+                  <span class="dot"></span> Medium
+                </label>
+                
+                <input type="radio" name="severity" id="sev-critical" value="critical">
+                <label for="sev-critical" class="sev-label sev-critical">
+                  <span class="dot"></span> Critical
+                </label>
+              </div>
+            </div>
+            
+            <!-- Description -->
+            <div class="form-group">
+              <label for="flood-desc">Situational Details</label>
+              <textarea id="flood-desc" rows="3" placeholder="Describe the water depth, traffic situation, or immediate needs..." required></textarea>
+            </div>
+            
+            <!-- Submit Button (Pill style, solid black, trailing arrow) -->
+            <button type="submit" class="btn-primary" id="btn-submit-report">
+              Submit Flood Report <span class="arrow">→</span>
+            </button>
+          </form>
+        </section>
+
+        <!-- Safe Zones & Navigation Card -->
+        <section class="card navigation-card">
+          <h2>Safe Zones & Routes</h2>
+          <p class="section-desc">Select a safe haven to plot the safest path bypassing all flooded zones.</p>
+          
+          <div class="safe-zones-list" id="safe-zones-list">
+            <!-- Populated via Javascript -->
+          </div>
+
+          <!-- Selected Route Details -->
+          <div id="route-details-panel" class="route-details-container hidden">
+            <div class="route-header">
+              <span class="eyebrow" id="route-target-name">Safe Haven Route</span>
+              <h3>Navigation Guidance</h3>
+            </div>
+            <div class="route-directions" id="route-directions-steps">
+              <!-- Directions populated via Javascript -->
+            </div>
+            <button type="button" class="btn-secondary" id="btn-clear-route">Clear Route</button>
+          </div>
+        </section>
+
+      </aside>
+
+      <!-- RIGHT COLUMN: Map & Live Feed -->
+      <div class="map-and-feed-column">
+        
+        <!-- Interactive Map Card -->
+        <section class="card map-card">
+          <!-- Floating Map Mode Controls -->
+          <div class="map-controls-floating">
+            <button type="button" class="btn-control active" id="btn-view-heatmap">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg> Heatmap
+            </button>
+            <button type="button" class="btn-control" id="btn-view-markers">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg> Reports
+            </button>
+          </div>
+          
+          <div id="map"></div>
+          
+          <div class="map-legend">
+            <div class="legend-title">Heatmap Density</div>
+            <div class="legend-bar"></div>
+            <div class="legend-labels">
+              <span>Low</span>
+              <span>Moderate</span>
+              <span>High (Danger)</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Chronological Live Updates Feed -->
+        <section class="card updates-card" id="updates-card-container">
+          <div class="updates-header">
+            <div class="updates-title-row" style="display: flex; align-items: center; gap: var(--space-3);">
+              <h2>Live Feed</h2>
+              <span class="badge badge-live">
+                <span class="live-dot"></span> Live
+              </span>
+            </div>
+          </div>
+          <p class="section-desc">Latest crowd-sourced updates and official evacuations from around Accra.</p>
+          <div class="updates-feed-list" id="updates-feed-list">
+            <!-- Icon badges triplets populated by app.js -->
+          </div>
+        </section>
+
+      </div>
+      
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Accra FloodWatch &copy; 2026. Made with careful restraint and whitespace.</p>
+    </footer>
+
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- Leaflet Heatmap Plugin -->
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  
+  <!-- Main Logic JS -->
+  <script src="app.js"></script>
+</body>
+</html>

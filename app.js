@@ -150,7 +150,8 @@ const state = new AppState();
 let map;
 let heatmapLayer = null;
 let reportMarkersLayer = null;
-let safeZoneMarkersLayer = null;
+let safeZoneHeatmapLayer = null;
+let safeZoneClickLayer = null;
 let tempReportMarker = null;
 
 function initMap() {
@@ -168,7 +169,7 @@ function initMap() {
   }).addTo(map);
 
   reportMarkersLayer = L.layerGroup();
-  safeZoneMarkersLayer = L.layerGroup().addTo(map);
+  safeZoneClickLayer = L.layerGroup().addTo(map);
 
   map.on('click', function(e) {
     const lat = parseFloat(e.latlng.lat.toFixed(5));
@@ -239,25 +240,30 @@ function renderMapLayers() {
 }
 
 function renderSafeZoneMarkers() {
-  safeZoneMarkersLayer.clearLayers();
+  if (safeZoneHeatmapLayer) map.removeLayer(safeZoneHeatmapLayer);
+  if (safeZoneClickLayer) {
+    safeZoneClickLayer.clearLayers();
+    map.removeLayer(safeZoneClickLayer);
+  }
 
+  safeZoneClickLayer = L.layerGroup().addTo(map);
+
+  // Green heatmap points for Safe Zones (using Leaflet Heatmap instead of icons)
+  const safeZoneHeatPoints = state.safeZones.map(sz => [sz.coords[0], sz.coords[1], 1.0]);
+
+  safeZoneHeatmapLayer = L.heatLayer(safeZoneHeatPoints, {
+    radius: 45,
+    blur: 20,
+    maxZoom: 14,
+    gradient: {
+      0.2: 'rgba(0, 190, 82, 0.35)',
+      0.6: 'rgba(0, 190, 82, 0.75)',
+      1.0: 'rgba(0, 190, 82, 0.95)'
+    }
+  }).addTo(map);
+
+  // Clickable target over green safe zone heatmaps for popups & route plotting
   state.safeZones.forEach(sz => {
-    const icon = L.divIcon({
-      className: "custom-safe-marker",
-      html: `
-        <div class="safe-marker-inner">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-            <path d="M21 3v5h-5"/>
-            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-            <path d="M3 21v-5h5"/>
-          </svg>
-        </div>
-      `,
-      iconSize: [30, 30],
-      iconAnchor: [15, 15]
-    });
-
     const popupContent = `
       <div class="map-popup popup-safe">
         <span class="popup-eyebrow eyebrow severity-safe">SAFE HAVEN</span>
@@ -273,8 +279,16 @@ function renderSafeZoneMarkers() {
       </div>
     `;
 
-    const marker = L.marker(sz.coords, { icon }).bindPopup(popupContent);
-    safeZoneMarkersLayer.addLayer(marker);
+    const circle = L.circleMarker(sz.coords, {
+      radius: 14,
+      fillColor: '#00BE52',
+      fillOpacity: 0.25,
+      color: '#00BE52',
+      weight: 2,
+      dashArray: '4, 4'
+    }).bindPopup(popupContent);
+
+    safeZoneClickLayer.addLayer(circle);
   });
 }
 

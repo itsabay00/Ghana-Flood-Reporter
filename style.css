@@ -788,21 +788,19 @@ input[readonly] {
   100% { opacity: 0.3; }
 }
 
-/* Updates card fills remaining vertical space after the map with a locked maximum height */
+/* Updates card fills remaining vertical space after the map, extending to match safe zones column */
 .updates-card {
   flex: 1;
   min-height: 0;
-  max-height: 450px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* Feed list fills the collapsible area and scrolls internally */
+/* Feed list fills the container and scrolls internally */
 .updates-feed-list {
   flex: 1;
   min-height: 0;
-  max-height: 320px;
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
@@ -901,39 +899,98 @@ input[readonly] {
 }
 
 /* --------------------------------------------------
-   RESPONSIVE DESIGN
+   RESPONSIVE DESIGN (MOBILE & TABLET REORDERING)
 -------------------------------------------------- */
 @media (max-width: 1024px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
     gap: var(--space-8);
   }
-  
-  .control-panel {
-    order: 2;
-  }
-  
-  .map-and-feed-column {
-    order: 1;
-  }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .app-container {
     padding: var(--space-4);
   }
   
   .app-header {
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+
+  .brand {
+    order: 1;
   }
   
+  /* 1. Flood Risk Score is first under header brand */
   .header-status-card {
+    order: 2;
     width: 100%;
   }
   
-  .metrics-row {
+  /* Flatten grid columns on mobile so elements order cleanly */
+  .dashboard-grid {
+    display: flex;
     flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .control-panel,
+  .map-and-feed-column {
+    display: contents;
+  }
+  
+  /* 2. Dashboard metrics (active zones, safe haven, today's rain in 1 horizontal row) */
+  .metrics-row {
+    order: 1;
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-2);
+    width: 100%;
+  }
+
+  .metric-card {
+    flex: 1;
+    min-width: 0;
+    padding: var(--space-3) var(--space-3);
+  }
+
+  .metric-label {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .metric-value {
+    font-size: 20px;
+  }
+
+  /* 3. Followed by the Map */
+  .map-card {
+    order: 2;
+    height: 380px;
+  }
+
+  /* 4. Flood Report */
+  .form-card {
+    order: 3;
+  }
+
+  /* 5. Live Feed */
+  .updates-card {
+    order: 4;
+    max-height: 420px;
+  }
+
+  /* 6. Lastly Safe Zones */
+  .navigation-card {
+    order: 5;
   }
 }
 

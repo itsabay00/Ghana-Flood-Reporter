@@ -14,5 +14,8 @@
     "pg": "^8.12.0"
   },
   "author": "Antigravity",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "vercel": "^56.3.2"
+  }
 }

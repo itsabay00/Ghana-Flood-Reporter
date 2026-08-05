@@ -3,3 +3,6 @@ database.sqlite
 database.sqlite-journal
 npm-debug.log
 .DS_Store
+
+.vercel
+.env*

@@ -10,8 +10,11 @@ const PORT = process.env.PORT || 8000;
 app.use(cors());
 app.use(express.json());
 
-// Serve static frontend files from parent directory (for local running)
-app.use(express.static(path.join(__dirname, '..')));
+// Serve static frontend files ONLY during local development
+// On Vercel, static files are served by the CDN via filesystem handling
+if (!process.env.VERCEL) {
+  app.use(express.static(path.join(__dirname, '..')));
+}
 
 // --------------------------------------------------
 // DATABASE SETUP — PostgreSQL via Neon / Vercel Postgres
@@ -170,22 +173,35 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', database: 'postgresql' });
 });
 
-// Serve frontend SPA for everything else (for local running)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'index.html'));
-});
+// Serve frontend SPA for everything else (local development ONLY)
+if (!process.env.VERCEL) {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
+  });
+}
 
 // --------------------------------------------------
-// BOOT — Initialize DB then start server
+// BOOT — Initialize DB then start server (local only)
+// On Vercel, the function is invoked per-request.
 // --------------------------------------------------
-initializeDatabase().then(() => {
-  app.listen(PORT, () => {
-    console.log(`==================================================`);
-    console.log(`Accra FloodWatch server running...`);
-    console.log(`Access locally: http://localhost:${PORT}`);
-    console.log(`==================================================`);
+if (!process.env.VERCEL) {
+  initializeDatabase().then(() => {
+    app.listen(PORT, () => {
+      console.log(`==================================================`);
+      console.log(`Accra FloodWatch server running...`);
+      console.log(`Access locally: http://localhost:${PORT}`);
+      console.log(`==================================================`);
+    });
+  }).catch(err => {
+    console.error('Startup error:', err);
+    process.exit(1);
   });
-}).catch(err => {
-  console.error('Startup error:', err);
-  process.exit(1);
-});
+} else {
+  // On Vercel, initialize the DB on cold-start
+  initializeDatabase().catch(err => {
+    console.error('Vercel DB init error:', err);
+  });
+}
+
+// Export for Vercel serverless
+module.exports = app;

@@ -788,10 +788,11 @@ input[readonly] {
   100% { opacity: 0.3; }
 }
 
-/* Updates card fills all remaining vertical space after the map */
+/* Updates card fills remaining vertical space after the map with a locked maximum height */
 .updates-card {
   flex: 1;
   min-height: 0;
+  max-height: 450px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -801,6 +802,7 @@ input[readonly] {
 .updates-feed-list {
   flex: 1;
   min-height: 0;
+  max-height: 320px;
   display: flex;
   flex-direction: column;
   gap: var(--space-6);

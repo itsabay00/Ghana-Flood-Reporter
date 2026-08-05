@@ -280,10 +280,12 @@ function renderSafeZoneMarkers() {
     `;
 
     const circle = L.circleMarker(sz.coords, {
-      radius: 16,
-      stroke: false,
+      radius: 14,
       fillColor: '#00BE52',
-      fillOpacity: 0.35
+      fillOpacity: 0.25,
+      color: '#00BE52',
+      weight: 2,
+      dashArray: '4, 4'
     }).bindPopup(popupContent);
 
     safeZoneClickLayer.addLayer(circle);
